@@ -188,17 +188,25 @@ namespace UaSubscriber
 
                         try
                         {
-                            Log.System("Press any key to enter the action menu.");
-
-                            while (true)
+                            if (Environment.UserInteractive)
                             {
-                                if (Console.KeyAvailable && m_responders.Count > 0)
-                                {
-                                    while (Console.KeyAvailable) Console.ReadKey(true);
-                                    await SendRequests(ct);
-                                }
+                                Log.System("Press any key to enter the action menu.");
 
-                                await Task.Delay(100, ct);
+                                while (true)
+                                {
+                                    if (Console.KeyAvailable && m_responders.Count > 0)
+                                    {
+                                        while (Console.KeyAvailable) Console.ReadKey(true);
+                                        await SendRequests(ct);
+                                    }
+
+                                    await Task.Delay(100, ct);
+                                }
+                            }
+                            else
+                            {
+                                // In non-interactive environments (like containers), just wait for cancellation
+                                await Task.Delay(Timeout.Infinite, ct);
                             }
                         }
                         catch (TaskCanceledException)
