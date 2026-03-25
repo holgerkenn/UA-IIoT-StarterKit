@@ -1,6 +1,10 @@
 ﻿using UaPubSubCommon;
 using UaSubscriber;
 
+static string GetEnv(string name, string defaultValue) => Environment.GetEnvironmentVariable(name) ?? defaultValue;
+static int GetEnvInt(string name, int defaultValue) => int.TryParse(Environment.GetEnvironmentVariable(name), out var val) ? val : defaultValue;
+static bool GetEnvBool(string name, bool defaultValue) => bool.TryParse(Environment.GetEnvironmentVariable(name), out var val) ? val : defaultValue;
+
 try
 {
     var cts = new CancellationTokenSource();
@@ -15,14 +19,14 @@ try
 
     var configuration = new Configuration()
     {
-        BrokerHost = "iop-gateway-germany.opcfoundation.org",
-        BrokerPort = 8883,
-        UseTls = true,
-        UserName = "iopuser",
-        Password = "iop-opc",
-        TopicPrefix = "opcua-kit",
-        PublisherId = "opcf-iiot-kit-requestor",
-        UseNewEncodings = true
+        BrokerHost = GetEnv("BROKER_HOST", "mqtt-broker-local"),
+        BrokerPort = GetEnvInt("BROKER_PORT", 1883),
+        UseTls = GetEnvBool("BROKER_TLS", false),
+        UserName = GetEnv("BROKER_USER", "iopuser"),
+        Password = GetEnv("BROKER_PASS", "iop-opc"),
+        TopicPrefix = GetEnv("TOPIC_PREFIX", "opcua-kit"),
+        PublisherId = GetEnv("PUBLISHER_ID", "opcf-iiot-kit-requestor"),
+        UseNewEncodings = GetEnvBool("USE_NEW_ENCODINGS", true)
     };
 
     Log.System("Use Ctrl-C or Ctrl-Break or exit program.");

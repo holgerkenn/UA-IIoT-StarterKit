@@ -1,0 +1,53 @@
+version: "3.9"
+services:
+  mqtt-broker-local:
+    image: eclipse-mosquitto:2.0
+    container_name: mqtt-broker-local
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+    restart: unless-stopped
+    networks:
+      - ua-iiot-network
+
+  ua-publisher:
+    build:
+      context: .
+      dockerfile: UaPublisher/Dockerfile
+    container_name: ua-publisher
+    depends_on:
+      - mqtt-broker-local
+    environment:
+      - BROKER_HOST=mqtt-broker-local
+      - BROKER_PORT=1883
+      - BROKER_TLS=false
+      - BROKER_USER=iopuser
+      - BROKER_PASS=iop-opc
+      - TOPIC_PREFIX=opcua-kit
+      - PUBLISHER_ID=opcf-iiot-kit-dotnet
+    networks:
+      - ua-iiot-network
+
+  ua-subscriber:
+    build:
+      context: .
+      dockerfile: UaSubscriber/Dockerfile
+    container_name: ua-subscriber
+    depends_on:
+      - mqtt-broker-local
+    environment:
+      - BROKER_HOST=mqtt-broker-local
+      - BROKER_PORT=1883
+      - BROKER_TLS=false
+      - BROKER_USER=iopuser
+      - BROKER_PASS=iop-opc
+      - TOPIC_PREFIX=opcua-kit
+      - PUBLISHER_ID=opcf-iiot-kit-requestor
+    networks:
+      - ua-iiot-network
+
+networks:
+  ua-iiot-network:
+    driver: bridge
