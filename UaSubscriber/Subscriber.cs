@@ -188,15 +188,58 @@ namespace UaSubscriber
 
                         try
                         {
-                            if (Environment.UserInteractive)
+                            bool hasConsole = Environment.UserInteractive;
+
+                            if (hasConsole)
+                            {
+                                hasConsole = !Console.IsInputRedirected && !Console.IsOutputRedirected && !Console.IsErrorRedirected;
+
+                                if (hasConsole)
+                                {
+                                    try
+                                    {
+                                        // Probe KeyAvailable once to see if the console API is usable.
+                                        _ = Console.KeyAvailable;
+                                    }
+                                    catch (InvalidOperationException)
+                                    {
+                                        hasConsole = false;
+                                    }
+                                }
+                            }
+
+                            if (hasConsole && m_responders.Count > 0)
                             {
                                 Log.System("Press any key to enter the action menu.");
 
                                 while (true)
                                 {
-                                    if (Console.KeyAvailable && m_responders.Count > 0)
+                                    bool keyAvailable = false;
+                                    try
                                     {
-                                        while (Console.KeyAvailable) Console.ReadKey(true);
+                                        keyAvailable = Console.KeyAvailable;
+                                    }
+                                    catch (InvalidOperationException)
+                                    {
+                                        keyAvailable = false;
+                                    }
+
+                                    if (keyAvailable)
+                                    {
+                                        while (true)
+                                        {
+                                            bool loopKeyAvailable;
+                                            try
+                                            {
+                                                loopKeyAvailable = Console.KeyAvailable;
+                                            }
+                                            catch (InvalidOperationException)
+                                            {
+                                                break;
+                                            }
+                                            if (!loopKeyAvailable) break;
+                                            Console.ReadKey(true);
+                                        }
                                         await SendRequests(ct);
                                     }
 
@@ -205,7 +248,7 @@ namespace UaSubscriber
                             }
                             else
                             {
-                                // In non-interactive environments (like containers), just wait for cancellation
+                                Log.System("Container/redirected IO detected, action menu disabled.");
                                 await Task.Delay(Timeout.Infinite, ct);
                             }
                         }
