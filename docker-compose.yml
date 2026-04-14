@@ -8,7 +8,6 @@ services:
       - "9001:9001"
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
-    restart: unless-stopped
     networks:
       - ua-iiot-network
 
